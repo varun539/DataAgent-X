@@ -1,12 +1,17 @@
 from fastapi import FastAPI
-from app.routers import analyze, chat
+from fastapi.middleware.cors import CORSMiddleware
 
-app = FastAPI(title="DataAgentX API 🚀")
+app = FastAPI()
 
-# Routes
-app.include_router(analyze.router, prefix="/analyze", tags=["Analyze"])
-app.include_router(chat.router, prefix="/chat", tags=["Chat"])
+# Allow frontend to talk to backend
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 @app.get("/")
-def root():
-    return {"status": "ok", "message": "DataAgentX backend running 🚀"}
+def home():
+    return {"message": "DataAgent X Backend Running 🚀"}
