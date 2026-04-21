@@ -15,3 +15,11 @@ app.add_middleware(
 @app.get("/")
 def home():
     return {"message": "DataAgent X Backend Running 🚀"}
+
+
+
+
+
+from app.routers import upload
+
+app.include_router(upload.router)
