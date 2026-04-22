@@ -2,6 +2,11 @@
 
 import { useState } from "react";
 
+// ✅ Use env variable (same as dashboard)
+const API_URL =
+  process.env.NEXT_PUBLIC_API_URL ||
+  "https://crispy-space-goggles-5gx794q74j4wcpg94-8000.app.github.dev";
+
 export default function Home() {
   const [messages, setMessages] = useState<any[]>([]);
   const [input, setInput] = useState("");
@@ -14,16 +19,13 @@ export default function Home() {
     setInput("");
 
     try {
-      const res = await fetch(
-        "https://crispy-space-goggles-5gx794q74j4wcpg94-8000.app.github.dev/chat",
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({ message: input }),
-        }
-      );
+      const res = await fetch(`${API_URL}/chat/`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ message: input }),
+      });
 
       console.log("STATUS:", res.status);
 
@@ -41,7 +43,6 @@ export default function Home() {
 
   return (
     <main className="min-h-screen flex flex-col items-center bg-black text-white p-6">
-
       <h1 className="text-5xl font-bold mb-4">🚀 DataAgent X</h1>
 
       <p className="text-gray-400 mb-6 text-center">
