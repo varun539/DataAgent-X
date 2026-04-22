@@ -13,32 +13,36 @@ export default function Home() {
     setMessages(newMessages);
     setInput("");
 
-    const res = await fetch(
-      "https://crispy-space-goggles-5gx794q74j4wcpg94-8000.app.github.dev/chat",
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ message: input }),
-      }
-    );
+    try {
+      const res = await fetch(
+        "https://crispy-space-goggles-5gx794q74j4wcpg94-8000.app.github.dev/chat",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ message: input }),
+        }
+      );
 
-    const data = await res.json();
+      console.log("STATUS:", res.status);
 
-    setMessages([
-      ...newMessages,
-      { role: "assistant", content: data.response || "No response" },
-    ]);
+      const data = await res.json();
+      console.log("DATA:", data);
+
+      setMessages([
+        ...newMessages,
+        { role: "assistant", content: data.response || "No response" },
+      ]);
+    } catch (err) {
+      console.error("ERROR:", err);
+    }
   };
 
   return (
     <main className="min-h-screen flex flex-col items-center bg-black text-white p-6">
 
-      {/* HERO SECTION */}
-      <h1 className="text-5xl font-bold mb-4">
-        🚀 DataAgent X
-      </h1>
+      <h1 className="text-5xl font-bold mb-4">🚀 DataAgent X</h1>
 
       <p className="text-gray-400 mb-6 text-center">
         Upload your data → Train models → Get AI insights
@@ -46,18 +50,17 @@ export default function Home() {
 
       <a
         href="/dashboard"
-        className="px-6 py-3 bg-white text-black rounded-xl font-semibold hover:bg-gray-200 transition mb-10"
+        className="px-6 py-3 bg-white text-black rounded-xl font-semibold mb-10"
       >
         Go to Dashboard →
       </a>
 
-      {/* CHAT SECTION */}
       <div className="w-full max-w-2xl">
         <h2 className="text-2xl font-bold mb-4">Chat with AI 🤖</h2>
 
         <div className="border border-gray-700 p-4 h-[400px] overflow-y-auto rounded mb-4">
           {messages.map((msg, i) => (
-            <div key={i} className="mb-2">
+            <div key={i}>
               <strong>{msg.role === "user" ? "You: " : "AI: "}</strong>
               {msg.content}
             </div>
@@ -73,13 +76,12 @@ export default function Home() {
           />
           <button
             onClick={sendMessage}
-            className="bg-white text-black px-4 rounded hover:bg-gray-200"
+            className="bg-white text-black px-4 rounded"
           >
             Send
           </button>
         </div>
       </div>
-
     </main>
   );
 }

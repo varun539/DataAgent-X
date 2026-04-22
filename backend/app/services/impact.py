@@ -1,27 +1,35 @@
+import pandas as pd
 import os
 from openai import OpenAI
 
 client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
+# ✅ ADD THIS FUNCTION
+def generate_insights(df: pd.DataFrame):
+    insights = []
+
+    insights.append(f"Dataset has {len(df)} rows and {len(df.columns)} columns")
+
+    numeric_cols = df.select_dtypes(include=['number']).columns
+
+    for col in numeric_cols:
+        insights.append(f"{col} avg: {df[col].mean():.2f}")
+
+    return insights
+
+
+# ✅ EXISTING AI FUNCTION
 def generate_business_impact(summary: str):
     prompt = f"""
-    You are an expert Shopify business analyst.
+    You are an expert e-commerce analyst.
 
-    Based on this data:
+    Analyze this data:
     {summary}
 
-    Give output in this format:
-
-    🔍 Key Insights:
-    - ...
-
-    ⚠️ Problems:
-    - ...
-
-    🚀 Actions to Increase Revenue:
-    - ...
-
-    Keep it short, practical, and business-focused.
+    Give:
+    - Key insights
+    - Problems
+    - Actions to increase revenue
     """
 
     response = client.chat.completions.create(
