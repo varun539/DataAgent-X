@@ -24,3 +24,11 @@ def prepare_features(df, profile, target_col, training=True, feature_schema=None
     X = X.apply(pd.to_numeric, errors="coerce").fillna(0)
 
     return X, y
+
+summary = df.describe().to_string()
+
+ai_insights = generate_business_impact(summary)
+
+return {
+    "insights": [ai_insights]
+}
