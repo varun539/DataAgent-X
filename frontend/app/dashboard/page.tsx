@@ -17,7 +17,7 @@ export default function Dashboard() {
     const formData = new FormData();
     formData.append("file", file);
 
-    const res = await fetch("http://127.0.0.1:8001/upload", {
+    const res = await fetch("https://crispy-space-goggles-5gx794q74j4wcpg94-8000.app.github.dev/", {
       method: "POST",
       body: formData,
     });
