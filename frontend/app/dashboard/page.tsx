@@ -10,7 +10,6 @@ import {
 const API_URL =
   process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
 
-// TYPES
 interface AnalysisResult {
   model: string;
   target: string;
@@ -19,6 +18,9 @@ interface AnalysisResult {
   metrics: any;
   problem_type: string;
   insights: string[];
+  feature_importance?: any[];
+  correlations?: any[];
+  recommendations?: string[];
 }
 
 interface UploadResult {
@@ -28,7 +30,6 @@ interface UploadResult {
   chart_data: any[];
 }
 
-// SAFE FETCH
 async function safeFetch(url: string, opts: RequestInit) {
   try {
     const res = await fetch(url, opts);
@@ -64,7 +65,6 @@ export default function Dashboard() {
     "Which features matter most?"
   ];
 
-  // UPLOAD
   const handleUpload = async () => {
     if (!file) return;
 
@@ -89,7 +89,6 @@ export default function Dashboard() {
     }
   };
 
-  // ANALYZE
   const handleAnalyze = async () => {
     if (!file) return;
 
@@ -113,7 +112,6 @@ export default function Dashboard() {
     }
   };
 
-  // CHAT
   const sendMessage = async (msg?: string) => {
     const q = msg || input;
     if (!q.trim()) return;
@@ -125,9 +123,7 @@ export default function Dashboard() {
     try {
       const data = await safeFetch(`${API_URL}/chat/`, {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ message: q }),
       });
 
@@ -150,7 +146,6 @@ export default function Dashboard() {
   return (
     <div className="min-h-screen bg-[#060810] text-white">
 
-      {/* NAV */}
       <nav className="sticky top-0 z-50 px-8 py-4 bg-[#060810]/80 backdrop-blur-xl border-b border-white/10">
         <a href="/" className="font-bold text-lg bg-gradient-to-r from-blue-400 to-purple-500 text-transparent bg-clip-text">
           🚀 DataAgent X
@@ -160,9 +155,8 @@ export default function Dashboard() {
       <div className="max-w-5xl mx-auto p-6 space-y-8">
 
         {/* UPLOAD */}
-        <div className="bg-white/5 backdrop-blur-xl border border-white/10 p-6 rounded-2xl shadow-xl">
+        <div className="bg-white/5 border border-white/10 p-6 rounded-2xl">
 
-          {/* DRAG DROP */}
           <div
             onDragOver={(e) => {
               e.preventDefault();
@@ -172,70 +166,41 @@ export default function Dashboard() {
             onDrop={(e) => {
               e.preventDefault();
               setDragActive(false);
-
-              const droppedFile = e.dataTransfer.files[0];
-              if (droppedFile) {
-                setFile(droppedFile);
+              const f = e.dataTransfer.files[0];
+              if (f) {
+                setFile(f);
                 setUploadResult(null);
                 setResult(null);
                 setError("");
               }
             }}
-            className={`mt-4 border-2 border-dashed rounded-2xl p-10 text-center transition ${
-              dragActive
-                ? "border-blue-400 bg-blue-500/10"
-                : "border-white/10"
+            className={`border-2 border-dashed rounded-2xl p-10 text-center ${
+              dragActive ? "border-blue-400 bg-blue-500/10" : "border-white/10"
             }`}
           >
-            <p className="text-gray-400 mb-2">
-              Drag & drop your CSV file here
-            </p>
-
-            <p className="text-sm text-gray-500 mb-4">or</p>
+            <p className="text-gray-400">Drag & drop CSV</p>
 
             <input
               type="file"
               accept=".csv"
-              onChange={(e) => {
-                const selectedFile = e.target.files?.[0];
-                if (selectedFile) {
-                  setFile(selectedFile);
-                  setUploadResult(null);
-                  setResult(null);
-                  setError("");
-                }
-              }}
+              onChange={(e) => setFile(e.target.files?.[0] || null)}
               className="hidden"
               id="fileUpload"
             />
 
-            <label
-              htmlFor="fileUpload"
-              className="px-6 py-2 bg-white text-black rounded-xl cursor-pointer hover:scale-105 transition"
-            >
-              Browse File
+            <label htmlFor="fileUpload" className="mt-4 inline-block px-4 py-2 bg-white text-black rounded">
+              Browse
             </label>
 
-            {file && (
-              <p className="mt-4 text-green-400">
-                ✅ {file.name}
-              </p>
-            )}
+            {file && <p className="text-green-400 mt-3">✅ {file.name}</p>}
           </div>
 
-          {/* BUTTONS */}
           <div className="flex gap-3 mt-4">
-            <button
-              onClick={handleUpload}
-              className="px-6 py-2 bg-white/10 rounded-xl hover:bg-white/20 transition"
-            >
+            <button onClick={handleUpload} className="px-4 py-2 bg-white/10 rounded">
               {loading ? "Loading..." : "Preview"}
             </button>
 
-            <button
-              onClick={handleAnalyze}
-              className="px-6 py-2 rounded-xl bg-gradient-to-r from-blue-400 to-purple-500 hover:scale-105 transition"
-            >
+            <button onClick={handleAnalyze} className="px-4 py-2 bg-gradient-to-r from-blue-400 to-purple-500 rounded">
               {analyzing ? "Analyzing..." : "Analyze"}
             </button>
           </div>
@@ -243,82 +208,61 @@ export default function Dashboard() {
           {error && <p className="text-red-400 mt-3">{error}</p>}
         </div>
 
-        {/* PREVIEW */}
-        {uploadResult && !result && (
-          <div className="bg-white/5 border border-white/10 p-6 rounded-2xl">
-            <p>Rows: {uploadResult.rows}</p>
-            <p>Columns: {uploadResult.columns}</p>
-          </div>
-        )}
-
-        {/* CHART */}
-        {uploadResult?.chart_data?.length > 0 && (
-          <div className="bg-white/5 border border-white/10 p-6 rounded-2xl">
-            <ResponsiveContainer width="100%" height={300}>
-              <BarChart data={uploadResult.chart_data}>
-                <XAxis dataKey="label" />
-                <YAxis />
-                <Tooltip />
-                <Bar dataKey="value" />
-              </BarChart>
-            </ResponsiveContainer>
-          </div>
-        )}
-
         {/* INSIGHTS */}
         {result && (
-          <div className="bg-white/5 border border-white/10 p-6 rounded-2xl space-y-2">
-            <h2 className="font-bold text-lg">🚀 AI Insights</h2>
-
+          <div className="bg-white/5 p-6 rounded-2xl space-y-3">
+            <h2 className="font-bold">🚀 AI Insights</h2>
             {result.insights.map((i, idx) => (
               <p key={idx}>{i}</p>
             ))}
           </div>
         )}
 
+        {/* FEATURE IMPORTANCE */}
+        {result?.feature_importance && (
+          <div className="bg-white/5 p-6 rounded-2xl">
+            <h2 className="font-bold mb-3">📊 Top Features</h2>
+
+            {result.feature_importance.map((f: any, i: number) => (
+              <p key={i}>
+                {f[0]} → {Number(f[1]).toFixed(3)}
+              </p>
+            ))}
+          </div>
+        )}
+
+        {/* RECOMMENDATIONS */}
+        {result?.recommendations && (
+          <div className="bg-green-900/30 p-6 rounded-2xl">
+            <h2 className="font-bold mb-3">💡 Recommendations</h2>
+
+            {result.recommendations.map((r, i) => (
+              <p key={i}>{r}</p>
+            ))}
+          </div>
+        )}
+
         {/* CHAT */}
-        <div className="bg-white/5 border border-white/10 p-6 rounded-2xl">
+        <div className="bg-white/5 p-6 rounded-2xl">
           <h2 className="font-bold mb-3">🤖 Ask AI</h2>
 
-          {/* Quick Questions */}
           <div className="flex flex-wrap gap-2 mb-3">
             {quickQ.map((q, i) => (
-              <button
-                key={i}
-                onClick={() => sendMessage(q)}
-                className="px-3 py-1 rounded-full text-sm bg-white/5 hover:bg-purple-500/20 border border-white/10"
-              >
+              <button key={i} onClick={() => sendMessage(q)} className="px-3 py-1 bg-white/5 rounded">
                 {q}
               </button>
             ))}
           </div>
 
-          {/* Chat Window */}
-          <div
-            ref={chatRef}
-            className="h-[200px] overflow-y-auto mb-3 space-y-2"
-          >
+          <div ref={chatRef} className="h-[200px] overflow-y-auto mb-3">
             {messages.map((m, i) => (
-              <p key={i}>
-                <b>{m.role === "user" ? "You:" : "AI:"}</b> {m.content}
-              </p>
+              <p key={i}><b>{m.role === "user" ? "You:" : "AI:"}</b> {m.content}</p>
             ))}
           </div>
 
-          {/* Input */}
           <div className="flex gap-2">
-            <input
-              value={input}
-              onChange={(e) => setInput(e.target.value)}
-              className="flex-1 p-2 bg-black/40 border border-white/10 rounded"
-              placeholder="Ask something..."
-            />
-            <button
-              onClick={() => sendMessage()}
-              className="px-4 bg-gradient-to-r from-blue-400 to-purple-500 rounded"
-            >
-              Ask
-            </button>
+            <input value={input} onChange={(e) => setInput(e.target.value)} className="flex-1 p-2 bg-black/40 rounded" />
+            <button onClick={() => sendMessage()} className="px-4 bg-purple-500 rounded">Ask</button>
           </div>
         </div>
 
