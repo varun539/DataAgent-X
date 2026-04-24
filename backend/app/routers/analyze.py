@@ -1,5 +1,6 @@
 from fastapi import APIRouter, UploadFile, File
 import pandas as pd
+import numpy as np
 
 from app.services.ml import (
     detect_target,
@@ -12,6 +13,21 @@ from app.services.ml import (
 )
 
 router = APIRouter()
+
+
+# 🔥 UNIVERSAL NUMPY FIX
+def convert_numpy(obj):
+    if isinstance(obj, np.generic):
+        return obj.item()
+    if isinstance(obj, np.ndarray):
+        return obj.tolist()
+    if isinstance(obj, list):
+        return [convert_numpy(i) for i in obj]
+    if isinstance(obj, tuple):
+        return [convert_numpy(i) for i in obj]
+    if isinstance(obj, dict):
+        return {k: convert_numpy(v) for k, v in obj.items()}
+    return obj
 
 
 @router.post("/")
@@ -52,10 +68,10 @@ async def analyze(file: UploadFile = File(...)):
         # 💡 Insights
         driver_insights = generate_driver_insights(feature_importance, correlations)
 
-        # 🔮 Predictions (last 5 rows)
+        # 🔮 Predictions
         try:
             preds = model.predict(X.tail(5))
-            future_preds = [float(x) for x in preds]
+            future_preds = preds.tolist() if hasattr(preds, "tolist") else preds
         except Exception:
             future_preds = []
 
@@ -66,27 +82,25 @@ async def analyze(file: UploadFile = File(...)):
         insights = [
             f"Best model: {model_name}",
             f"Problem type: {problem_type}",
-            f"Performance score: {round(score, 3)}"
+            f"Performance score: {round(float(score), 3)}"
         ] + driver_insights
 
-        # ✅ FINAL RESPONSE (FIXED JSON SERIALIZATION)
-        return {
-            "model": str(model_name),
-            "target": str(target),
-            "problem_type": str(problem_type),
-            "metrics": {"score": float(score)},
-            "insights": [str(i) for i in insights],
-            "feature_importance": [
-                [str(f[0]), float(f[1])] for f in feature_importance
-            ],
-            "correlations": [
-                [str(c[0]), float(c[1])] for c in correlations
-            ],
-            "predictions": [float(p) for p in future_preds],
-            "recommendations": [str(r) for r in recommendations],
-            "rows": int(len(df)),
-            "features": int(X.shape[1])
+        # ✅ CLEAN RESPONSE
+        response = {
+            "model": model_name,
+            "target": target,
+            "problem_type": problem_type,
+            "metrics": {"score": score},
+            "insights": insights,
+            "feature_importance": feature_importance,
+            "correlations": correlations,
+            "predictions": future_preds,
+            "recommendations": recommendations,
+            "rows": len(df),
+            "features": X.shape[1]
         }
+
+        return convert_numpy(response)
 
     except Exception as e:
         return {"error": str(e)}
