@@ -6,7 +6,7 @@ from sklearn.metrics import r2_score, accuracy_score
 from sklearn.linear_model import LinearRegression
 from sklearn.ensemble import RandomForestRegressor, RandomForestClassifier
 
-# Optional advanced models (safe import)
+# Optional advanced models
 try:
     from xgboost import XGBRegressor, XGBClassifier
 except:
@@ -36,7 +36,7 @@ def detect_problem_type(y):
     return "classification" if y.nunique() < 10 else "regression"
 
 
-# 🧠 Train models (ADVANCED)
+# 🧠 Train models
 def train_models(X, y, problem_type):
     if len(X) < 5:
         raise ValueError("Dataset too small")
@@ -49,28 +49,28 @@ def train_models(X, y, problem_type):
 
     if problem_type == "regression":
         models["LinearRegression"] = LinearRegression()
-        models["RandomForest"] = RandomForestRegressor(random_state=42)
+        models["RandomForest"] = RandomForestRegressor(n_estimators=50, random_state=42)
 
         if XGBRegressor:
-            models["XGBoost"] = XGBRegressor(verbosity=0)
+            models["XGBoost"] = XGBRegressor(n_estimators=50, verbosity=0)
 
         if LGBMRegressor:
-            models["LightGBM"] = LGBMRegressor()
+            models["LightGBM"] = LGBMRegressor(n_estimators=50)
 
         if CatBoostRegressor:
-            models["CatBoost"] = CatBoostRegressor(verbose=0)
+            models["CatBoost"] = CatBoostRegressor(iterations=50, verbose=0)
 
     else:
-        models["RandomForest"] = RandomForestClassifier(random_state=42)
+        models["RandomForest"] = RandomForestClassifier(n_estimators=50, random_state=42)
 
         if XGBClassifier:
-            models["XGBoost"] = XGBClassifier(verbosity=0)
+            models["XGBoost"] = XGBClassifier(n_estimators=50, verbosity=0)
 
         if LGBMClassifier:
-            models["LightGBM"] = LGBMClassifier()
+            models["LightGBM"] = LGBMClassifier(n_estimators=50)
 
         if CatBoostClassifier:
-            models["CatBoost"] = CatBoostClassifier(verbose=0)
+            models["CatBoost"] = CatBoostClassifier(iterations=50, verbose=0)
 
     best_model_name = None
     best_score = -np.inf
@@ -86,15 +86,12 @@ def train_models(X, y, problem_type):
             else:
                 score = accuracy_score(y_test, preds)
 
-            print(f"{name} score: {score}")
-
             if score > best_score:
                 best_score = score
                 best_model_name = name
                 best_model_obj = model
 
-        except Exception as e:
-            print(f"{name} failed: {e}")
+        except Exception:
             continue
 
     return best_model_name, best_score, best_model_obj
@@ -117,12 +114,11 @@ def get_feature_importance(model, X):
 
         return feature_imp[:5]
 
-    except Exception as e:
-        print("Feature importance error:", e)
+    except:
         return []
 
 
-# 📈 Correlation
+# 📈 Correlations
 def get_correlations(df, target):
     try:
         numeric_df = df.select_dtypes(include=np.number)
@@ -131,40 +127,76 @@ def get_correlations(df, target):
             return []
 
         corr = numeric_df.corr()
-
         target_corr = corr[target].drop(target)
+
         top_corr = target_corr.abs().sort_values(ascending=False)
 
         return list(top_corr.head(5).items())
 
-    except Exception as e:
-        print("Correlation error:", e)
+    except:
         return []
 
 
-# 💡 Insights
+# 💡 🔥 UPGRADED BUSINESS INSIGHTS
 def generate_driver_insights(feature_imp, correlations):
     insights = []
 
-    if feature_imp:
-        insights.append(f"📊 '{feature_imp[0][0]}' is the strongest driver")
+    # Top features → business meaning
+    for f, val in feature_imp[:3]:
+        insights.append(
+            f"🔍 '{f}' strongly influences your outcome — optimizing this can significantly impact results"
+        )
 
-    if correlations:
-        insights.append(f"📈 '{correlations[0][0]}' highly correlates with target")
+    # Correlations → trends
+    for c, val in correlations[:2]:
+        insights.append(
+            f"📈 '{c}' shows strong relationship with your target — track this closely for decision making"
+        )
 
-    insights.append("🚀 Focus on top features to improve results")
+    # Domain logic (VERY IMPORTANT 🔥)
+    feature_names = [f[0] for f in feature_imp]
+
+    if "Unemployment" in feature_names:
+        insights.append(
+            "⚠️ Higher unemployment may reduce customer spending — consider discounts or promotions"
+        )
+
+    if "Temperature" in feature_names:
+        insights.append(
+            "🌡️ Seasonal patterns detected — align inventory and demand with weather trends"
+        )
+
+    if "Fuel_Price" in feature_names:
+        insights.append(
+            "⛽ Fuel price fluctuations may affect logistics and customer behavior"
+        )
+
+    if "Store" in feature_names:
+        insights.append(
+            "🏬 Sales vary across stores — optimize high-performing locations and improve low-performing ones"
+        )
+
+    insights.append(
+        "🚀 Focus on top drivers and experiment with strategies to maximize business impact"
+    )
 
     return insights
 
 
-# 💡 Recommendations
+# 💡 🔥 UPGRADED RECOMMENDATIONS
 def generate_recommendations(feature_imp):
     recs = []
 
     if feature_imp:
-        recs.append(f"💡 Focus on '{feature_imp[0][0]}' to boost performance")
+        top = feature_imp[0][0]
 
-    recs.append("📊 Invest in high-impact features")
-    recs.append("📉 Reduce noise from weak features")
+        recs.append(
+            f"💡 Improve '{top}' using pricing, promotions, or operational strategies"
+        )
+
+    recs.append("📊 Segment data by region/time/product for deeper insights")
+    recs.append("📈 Track performance trends over time instead of static analysis")
+    recs.append("🧪 Run A/B tests on key variables to validate impact")
+    recs.append("🎯 Focus on high-impact features and reduce noise from weak ones")
 
     return recs
