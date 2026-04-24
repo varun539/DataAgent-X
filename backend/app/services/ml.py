@@ -104,17 +104,3 @@ def generate_driver_insights(feature_imp, correlations):
     insights.append("🚀 Focus on top features to improve results")
 
     return insights
-
-
-# 💰 RECOMMENDATIONS (FIXED POSITION)
-def generate_recommendations(feature_imp):
-    recs = []
-
-    if feature_imp:
-        top = feature_imp[0][0]
-        recs.append(f"💡 Focus on improving '{top}' to increase performance")
-
-    recs.append("📊 Invest more in high-performing features")
-    recs.append("📉 Reduce impact of low-performing variables")
-
-    return recs
