@@ -69,17 +69,21 @@ async def analyze(file: UploadFile = File(...)):
             f"Performance score: {round(score, 3)}"
         ] + driver_insights
 
-        # ✅ FINAL RESPONSE
+        # ✅ FINAL RESPONSE (FIXED JSON SERIALIZATION)
         return {
-            "model": model_name,
-            "target": target,
-            "problem_type": problem_type,
+            "model": str(model_name),
+            "target": str(target),
+            "problem_type": str(problem_type),
             "metrics": {"score": float(score)},
-            "insights": insights,
-            "feature_importance": feature_importance,
-            "correlations": correlations,
-            "predictions": future_preds,
-            "recommendations": recommendations,
+            "insights": [str(i) for i in insights],
+            "feature_importance": [
+                [str(f[0]), float(f[1])] for f in feature_importance
+            ],
+            "correlations": [
+                [str(c[0]), float(c[1])] for c in correlations
+            ],
+            "predictions": [float(p) for p in future_preds],
+            "recommendations": [str(r) for r in recommendations],
             "rows": int(len(df)),
             "features": int(X.shape[1])
         }
