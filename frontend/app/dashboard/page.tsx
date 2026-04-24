@@ -8,7 +8,7 @@ import {
 } from "recharts";
 
 const API_URL =
-  process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+  process.env.NEXT_PUBLIC_API_URL || "https://dataagent-x-backend.onrender.com";
 
 interface AnalysisResult {
   model: string;
