@@ -18,6 +18,10 @@ def generate_insights(df: pd.DataFrame):
     return insights
 
 
+def generate_business_impact(summary):
+    return f"AI Insight: Based on data → {summary[:200]}"   
+
+
 # ✅ EXISTING AI FUNCTION
 def generate_business_impact(summary: str):
     prompt = f"""

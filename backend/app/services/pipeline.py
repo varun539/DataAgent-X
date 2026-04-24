@@ -1,17 +1,18 @@
 import pandas as pd
 import numpy as np
+from app.services.impact import generate_business_impact
 
-def prepare_features(df, profile, target_col, training=True, feature_schema=None):
 
+def prepare_features(df, profile=None, target_col=None, training=True, feature_schema=None):
     df = df.copy()
     df = df.replace([np.inf, -np.inf], np.nan)
 
     if target_col not in df.columns:
         return pd.DataFrame(), pd.Series()
 
-    y = pd.to_numeric(df[target_col], errors="coerce")
     df = df.dropna(subset=[target_col])
 
+    y = pd.to_numeric(df[target_col], errors="coerce")
     X = df.drop(columns=[target_col])
 
     # Encode categoricals
@@ -25,10 +26,11 @@ def prepare_features(df, profile, target_col, training=True, feature_schema=None
 
     return X, y
 
-summary = df.describe().to_string()
 
-ai_insights = generate_business_impact(summary)
+def generate_ai_insights(df: pd.DataFrame):
+    summary = df.describe().to_string()
+    ai_text = generate_business_impact(summary)
 
-return {
-    "insights": [ai_insights]
-}
+    return {
+        "insights": [ai_text]
+    }
