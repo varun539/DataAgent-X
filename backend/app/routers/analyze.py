@@ -1,6 +1,7 @@
 from fastapi import APIRouter, UploadFile, File
 import pandas as pd
 import numpy as np
+from app.services.ai import generate_ai_summary
 
 from app.services.ml import (
     detect_target,
@@ -85,7 +86,13 @@ async def analyze(file: UploadFile = File(...)):
             f"Performance score: {round(float(score), 3)}"
         ] + driver_insights
 
-        # ✅ CLEAN RESPONSE
+        # 🤖 AI SUMMARY (FIXED POSITION)
+        try:
+            ai_summary = generate_ai_summary(insights, feature_importance)
+        except:
+            ai_summary = "AI summary not available"
+
+        # ✅ FINAL RESPONSE
         response = {
             "model": model_name,
             "target": target,
@@ -96,6 +103,7 @@ async def analyze(file: UploadFile = File(...)):
             "correlations": correlations,
             "predictions": future_preds,
             "recommendations": recommendations,
+            "ai_summary": ai_summary,   # ✅ ADDED HERE
             "rows": len(df),
             "features": X.shape[1]
         }
